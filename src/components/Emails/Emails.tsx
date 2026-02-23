@@ -9,12 +9,10 @@ import { FaChevronCircleLeft, FaChevronCircleRight, FaSort } from 'react-icons/f
 import { IoIosStats } from 'react-icons/io';
 import { Table } from "@chakra-ui/react"
 
-// Типы для стилей (inline styles)
 interface Styles {
     [key: string]: React.CSSProperties;
 }
 
-// Основной компонент
 const EmailList: React.FC = () => {
     const [emails, setEmails] = useState<Email[]>([]);
     const [pagination, setPagination] = useState<PaginationInfo>({
@@ -26,17 +24,21 @@ const EmailList: React.FC = () => {
         has_prev: false
     });
     const [loading, setLoading] = useState<boolean>(false);
+    const [paginationLoading, setPaginationLoading] = useState<boolean>(false);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedEmail, setSelectedEmail] = useState<EmailDetail | null>(null);
     const [detailLoading, setDetailLoading] = useState<boolean>(false);
 
-    // Создаем экземпляр мок-сервиса
     const [emailService] = useState<MockEmailService>(() => new MockEmailService());
 
-    const loadEmails = async (page: number): Promise<void> => {
-        setLoading(true);
-        setSelectedEmail(null);
+    const loadEmails = async (page: number, isPagination: boolean = false): Promise<void> => {
+        if (isPagination) {
+            setPaginationLoading(true);
+        } else {
+            setLoading(true);
+            setSelectedEmail(null);
+        }
 
         try {
             const result = await emailService.getEmails(page, 10, sortOrder);
@@ -47,18 +49,26 @@ const EmailList: React.FC = () => {
         } catch (error) {
             console.error('Error loading emails:', error);
         } finally {
-            setLoading(false);
+            if (isPagination) {
+                setPaginationLoading(false);
+            } else {
+                setLoading(false);
+            }
         }
     };
 
-    const handleSearch = async (page: number = 1): Promise<void> => {
+    const handleSearch = async (page: number = 1, isPagination: boolean = false): Promise<void> => {
         if (!searchQuery.trim()) {
-            loadEmails(1);
+            loadEmails(1, isPagination);
             return;
         }
 
-        setLoading(true);
-        setSelectedEmail(null);
+        if (isPagination) {
+            setPaginationLoading(true);
+        } else {
+            setLoading(true);
+            setSelectedEmail(null);
+        }
 
         try {
             const result = await emailService.searchEmails(searchQuery, page, 10);
@@ -76,7 +86,11 @@ const EmailList: React.FC = () => {
         } catch (error) {
             console.error('Error searching emails:', error);
         } finally {
-            setLoading(false);
+            if (isPagination) {
+                setPaginationLoading(false);
+            } else {
+                setLoading(false);
+            }
         }
     };
 
@@ -101,9 +115,9 @@ const EmailList: React.FC = () => {
 
     const handlePageChange = (newPage: number): void => {
         if (searchQuery) {
-            handleSearch(newPage);
+            handleSearch(newPage, true);
         } else {
-            loadEmails(newPage);
+            loadEmails(newPage, true);
         }
     };
 
@@ -117,7 +131,6 @@ const EmailList: React.FC = () => {
         }
     };
 
-    // Стили
     const styles: Styles = {
         container: {
             minHeight: '100vh',
@@ -138,7 +151,6 @@ const EmailList: React.FC = () => {
             fontSize: '28px',
             fontWeight: 'bold',
             color: '#333',
-            // marginBottom: '20px'
         },
         controls: {
             display: 'flex',
@@ -198,7 +210,9 @@ const EmailList: React.FC = () => {
             borderRadius: '12px',
             border: '1px solid #e0e0e0',
             overflow: 'hidden',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            position: 'relative',
+            minHeight: '400px'
         },
         emailItem: {
             padding: '16px 20px',
@@ -232,7 +246,9 @@ const EmailList: React.FC = () => {
             borderRadius: '12px',
             border: '1px solid #e0e0e0',
             padding: '24px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            position: 'relative',
+            minHeight: '400px'
         },
         detailTable: {
             display: 'grid',
@@ -304,6 +320,19 @@ const EmailList: React.FC = () => {
             fontSize: '12px',
             color: '#999',
             textAlign: 'center'
+        },
+        spinnerOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 10,
+            borderRadius: '12px'
         }
     };
 
@@ -318,22 +347,12 @@ const EmailList: React.FC = () => {
 
                     <div style={styles.controls}>
                         <div style={styles.searchBox}>
-                            {/* <input
-                                type="text"
-                                style={styles.searchInput}
+                            <Input
                                 placeholder="Поиск писем..."
                                 value={searchQuery}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                                 onKeyPress={handleKeyPress}
                             />
-                            <button
-                                style={styles.button}
-                                onClick={() => handleSearch()}
-                            >
-                                🔍 Поиск
-                            </button> */}
-
-                            <Input placeholder="Поиск писем..." />
                             <IconButton
                                 aria-label="Search database"
                                 onClick={() => handleSearch()}
@@ -341,13 +360,6 @@ const EmailList: React.FC = () => {
                                 <LuSearch />
                             </IconButton>
                         </div>
-
-                        {/* <button
-                            style={{ ...styles.button, ...styles.buttonSecondary }}
-                            onClick={toggleSort}
-                        >
-                            {sortOrder === 'asc' ? '📅 Старые первые' : '📅 Новые первые'}
-                        </button> */}
 
                         <IconButton
                             style={{ padding: '8px 12px' }}
@@ -361,66 +373,74 @@ const EmailList: React.FC = () => {
                             <div><IoIosStats style={{ width: '20px', height: '20px', marginRight: '8px' }} /></div>
                             Всего писем: {pagination.total_emails}
                         </div>
-
                     </div>
-
                 </div>
 
                 <div>
-                    {loading ? <div style={{ margin: '0 auto', textAlign: 'center', padding: '100px 0' }}><Spinner size="lg" /></div> : (
+                    {loading ? (
+                        <div style={{ margin: '0 auto', textAlign: 'center', padding: '100px 0' }}>
+                            <Spinner size="lg" />
+                        </div>
+                    ) : (
                         <>
                             <div style={styles.mainContent}>
                                 <div style={styles.emailList}>
-                                    <>
-                                        {emails.length === 0 ? (
-                                            <div style={{ padding: '60px', textAlign: 'center', color: '#666', marginTop: '20px' }}>
-                                                📭 Писем не найдено
-                                            </div>
-                                        ) : (
-                                            emails.map((email: Email) => (
-                                                <div
-                                                    key={email.id}
-                                                    style={{
-                                                        ...styles.emailItem,
-                                                        ...(selectedEmail?.id === email.id ? styles.selectedEmail : {}),
-                                                        backgroundColor: selectedEmail?.id === email.id ? '#e3f2fd' :
-                                                            email.is_read ? 'white' : '#fff9c4'
-                                                    }}
-                                                    onClick={() => handleEmailClick(email.id)}
-                                                    onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-                                                        if (selectedEmail?.id !== email.id) {
-                                                            e.currentTarget.style.backgroundColor = '#f5f5f5';
-                                                        }
-                                                    }}
-                                                    onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-                                                        if (selectedEmail?.id !== email.id) {
-                                                            e.currentTarget.style.backgroundColor = email.is_read ? 'white' : '#fff9c4';
-                                                        }
-                                                    }}
-                                                >
-                                                    <div style={styles.emailHeader}>
-                                                        <span>👤 {email.sender_name}</span>
-                                                        <span>📅 {email.date}</span>
-                                                    </div>
-                                                    <div style={styles.subject}>
-                                                        {!email.is_read && '🔴 '}
-                                                        {email.subject}
-                                                    </div>
-                                                    <div style={styles.preview}>
-                                                        {email.body_preview}
-                                                    </div>
+                                    {paginationLoading && (
+                                        <div style={styles.spinnerOverlay}>
+                                            <Spinner size="lg" color="blue.500" />
+                                        </div>
+                                    )}
+
+                                    {emails.length === 0 ? (
+                                        <div style={{ padding: '60px', textAlign: 'center', color: '#666', marginTop: '20px' }}>
+                                            📭 Писем не найдено
+                                        </div>
+                                    ) : (
+                                        emails.map((email: Email) => (
+                                            <div
+                                                key={email.id}
+                                                style={{
+                                                    ...styles.emailItem,
+                                                    ...(selectedEmail?.id === email.id ? styles.selectedEmail : {}),
+                                                    backgroundColor: selectedEmail?.id === email.id ? '#e3f2fd' :
+                                                        email.is_read ? 'white' : '#fff9c4'
+                                                }}
+                                                onClick={() => handleEmailClick(email.id)}
+                                                onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                                                    if (selectedEmail?.id !== email.id) {
+                                                        e.currentTarget.style.backgroundColor = '#f5f5f5';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                                                    if (selectedEmail?.id !== email.id) {
+                                                        e.currentTarget.style.backgroundColor = email.is_read ? 'white' : '#fff9c4';
+                                                    }
+                                                }}
+                                            >
+                                                <div style={styles.emailHeader}>
+                                                    <span>👤 {email.sender_name}</span>
+                                                    <span>📅 {email.date}</span>
                                                 </div>
-                                            ))
-                                        )}
-                                    </>
+                                                <div style={styles.subject}>
+                                                    {!email.is_read && '🔴 '}
+                                                    {email.subject}
+                                                </div>
+                                                <div style={styles.preview}>
+                                                    {email.body_preview}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
 
                                 <div style={styles.detailPanel}>
-                                    {detailLoading ? (
-                                        <div style={{ textAlign: 'center', padding: '60px', color: '#666' }}>
-                                            <Spinner size="lg" />
+                                    {detailLoading && (
+                                        <div style={styles.spinnerOverlay}>
+                                            <Spinner size="lg" color="blue.500" />
                                         </div>
-                                    ) : selectedEmail ? (
+                                    )}
+
+                                    {selectedEmail ? (
                                         <div>
                                             <Table.Root size="sm">
                                                 <Table.Body>
@@ -471,13 +491,14 @@ const EmailList: React.FC = () => {
                                     )}
                                 </div>
                             </div>
+
                             <div style={styles.pagination}>
                                 <IconButton
-                                    aria-label="Search database"
+                                    aria-label="Previous page"
                                     variant="ghost"
                                     size={"md"}
                                     onClick={() => handlePageChange(pagination.current_page - 1)}
-                                    disabled={!pagination.has_prev}
+                                    disabled={!pagination.has_prev || paginationLoading}
                                 >
                                     <FaChevronCircleLeft />
                                 </IconButton>
@@ -485,11 +506,11 @@ const EmailList: React.FC = () => {
                                     Страница {pagination.current_page} из {pagination.total_pages}
                                 </span>
                                 <IconButton
-                                    aria-label="Search database"
+                                    aria-label="Next page"
                                     variant="ghost"
                                     size={"md"}
                                     onClick={() => handlePageChange(pagination.current_page + 1)}
-                                    disabled={!pagination.has_next}
+                                    disabled={!pagination.has_next || paginationLoading}
                                 >
                                     <FaChevronCircleRight />
                                 </IconButton>
@@ -497,9 +518,6 @@ const EmailList: React.FC = () => {
                         </>
                     )}
                 </div>
-                {/* <div style={styles.demoNotice}>
-                    ⚡ Демо-режим: данные генерируются локально. Задержка сети: 0.8 сек
-                </div> */}
             </div>
         </div>
     );
