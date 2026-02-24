@@ -15,6 +15,7 @@ export default function Header({ setPage }: Props) {
         <button onClick={() => setPage("contacts")} className="nav-button">Контакты</button>
         <button onClick={() => setPage("users")} className="nav-button">Пользователи</button>
         <button onClick={() => setPage("emails")} className="nav-button">Письма</button>
+        <button onClick={() => setPage("table")} className="nav-button">Test</button>
       </nav>
     </header>
   );

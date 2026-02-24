@@ -1,1 +1,1 @@
-export type Page = "home" | "export" | "contacts" | "users" | "emails";
+export type Page = "home" | "export" | "contacts" | "users" | "emails"  | "table";
