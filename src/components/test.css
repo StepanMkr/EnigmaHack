@@ -255,3 +255,10 @@
   opacity: 1;
   background-color: #e1ecfe !important;
 }
+
+.spinner-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 0;
+}
