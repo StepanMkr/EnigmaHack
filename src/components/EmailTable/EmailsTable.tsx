@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Button, IconButton, Spinner, Table, Textarea } from '@chakra-ui/react';
+import { Button, IconButton, Spinner, Table } from '@chakra-ui/react';
 import * as XLSX from 'xlsx';
-import './test.css';
-import type { Ticket, ToneType } from './test.model';
-import { FaCircle, FaSyncAlt } from 'react-icons/fa';
+import './EmailsTable.css';
+import { FaCircle } from 'react-icons/fa';
 import { IoSync } from 'react-icons/io5';
 import { PiFileCsvDuotone } from 'react-icons/pi';
 import { RiFileExcel2Line } from 'react-icons/ri';
+import type { Ticket, ToneType } from './emails-table.model';
 
-const TicketTable: React.FC = () => {
+const EmailsTable: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -337,4 +337,4 @@ const TicketTable: React.FC = () => {
   );
 };
 
-export default TicketTable;
+export default EmailsTable;

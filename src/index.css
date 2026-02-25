@@ -12,3 +12,20 @@ header {
   padding: 20px;
   display: flex;
 }
+
+section {
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+nav {
+  margin-top: 10px;
+}
+
+footer {
+  text-align: "center";
+  padding: "20px";
+  background: "#0061a5";
+  color: "white"
+}
