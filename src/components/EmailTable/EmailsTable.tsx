@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Button, IconButton, Spinner, Table } from '@chakra-ui/react';
 import * as XLSX from 'xlsx';
 import './EmailsTable.css';
-import { FaCircle } from 'react-icons/fa';
-import { IoSync } from 'react-icons/io5';
-import { PiFileCsvDuotone } from 'react-icons/pi';
-import { RiFileExcel2Line } from 'react-icons/ri';
 import type { Ticket, ToneType } from './emails-table.model';
+import ActionButtons from '../../features/ActionButtons/ActionsButtons';
+import MessageDetails from '../../features/MessageDetails/MessageDetails';
+import AiResponse from '../../features/AiResponse/AiResponse';
+import DetailsHeader from '../../features/MessageDetailsHeader/MessageDetailsHeader';
+import TicketsTable from '../../features/TicketsTable/TickectsTable';
 
 const EmailsTable: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [syncing, setSyncing] = useState<boolean>(false);
-  const [generatingId, setGeneratingId] = useState<number | null>(null); // для отслеживания генерации
+  const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [aiResponses, setAiResponses] = useState<Record<number, string>>({});
 
   const mockTickets: Ticket[] = [
@@ -202,134 +203,39 @@ const EmailsTable: React.FC = () => {
 
   return (
     <div className="ticket-system">
-      {/* Кнопки управления */}
-      <div className="action-buttons">
-        <IconButton
-          aria-label="Search database"
-          onClick={handleSync}
-          loading={syncing}
-        >
-          <IoSync />
-        </IconButton>
-        <Button
-          onClick={downloadCsv}
-        >
-          <PiFileCsvDuotone /> Скачать CSV
-        </Button>
-        <Button
-          onClick={downloadXlsx}
-        >
-          <RiFileExcel2Line /> Скачать Excel (.xlsx)
-        </Button>
-      </div>
+      <ActionButtons
+        onSync={handleSync}
+        onCsvDownload={downloadCsv}
+        onXlsxDownload={downloadXlsx}
+        isSyncing={syncing}
+      />
 
-      {syncing ? <div className='spinner-wrapper'><Spinner size="lg" /></div> :
-        <Table.Root variant="outline" borderColor="gray.300">
-          <Table.Header bg="gray.200">
-            <Table.Row>
-              <Table.ColumnHeader>Дата</Table.ColumnHeader>
-              <Table.ColumnHeader>ФИО</Table.ColumnHeader>
-              <Table.ColumnHeader>Объект</Table.ColumnHeader>
-              <Table.ColumnHeader>Телефон</Table.ColumnHeader>
-              <Table.ColumnHeader>Email</Table.ColumnHeader>
-              <Table.ColumnHeader>Заводские номера</Table.ColumnHeader>
-              <Table.ColumnHeader>Тип приборов</Table.ColumnHeader>
-              <Table.ColumnHeader>Эмоц. окрас</Table.ColumnHeader>
-              <Table.ColumnHeader textAlign="end">Суть вопроса</Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {tickets.map((ticket: Ticket) => (
-              <Table.Row
-                key={ticket.id}
-                onClick={() => setSelectedTicket(ticket)}
-                className={`ticket-row ${selectedTicket?.id === ticket.id ? 'selected' : ''}`}>
-                <Table.Cell>{formatDate(ticket.date)}</Table.Cell>
-                <Table.Cell>{ticket.fullName}</Table.Cell>
-                <Table.Cell>{ticket.object}</Table.Cell>
-                <Table.Cell>{ticket.phone}</Table.Cell>
-                <Table.Cell>{ticket.email}</Table.Cell>
-                <Table.Cell>{ticket.serialNumbers}</Table.Cell>
-                <Table.Cell>{ticket.deviceType}</Table.Cell>
-                <Table.Cell>
-                  <FaCircle color={getToneColor(ticket.emotionalTone)} />
-                </Table.Cell>
-                <Table.Cell textAlign="end">{ticket.issueSummary}</Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>}
+      <TicketsTable
+        tickets={tickets}
+        selectedTicket={selectedTicket}
+        syncing={syncing}
+        onSelectTicket={setSelectedTicket}
+        getToneColor={getToneColor}
+        formatDate={formatDate}
+      />
 
-      {/* Панель детального просмотра */}
       {selectedTicket && (
         <div className="ticket-detail">
-          <div className="detail-header">
-            <h3>Детали обращения</h3>
-            <button
-              className="close-btn"
-              onClick={() => setSelectedTicket(null)}
-            >
-              ✕
-            </button>
-          </div>
+          <DetailsHeader onClose={() => setSelectedTicket(null)} />
 
           <div className="detail-content">
-            <div className="original-message">
-              <h4>Исходное сообщение:</h4>
-              <p><strong>От:</strong> {selectedTicket.fullName} ({selectedTicket.email})</p>
-              <p><strong>Телефон:</strong> {selectedTicket.phone}</p>
-              <p><strong>Объект:</strong> {selectedTicket.object}</p>
-              <p><strong>Заводские номера:</strong> {selectedTicket.serialNumbers}</p>
-              <p><strong>Тип приборов:</strong> {selectedTicket.deviceType}</p>
-              <p><strong>Дата:</strong> {formatDate(selectedTicket.date)}</p>
-              <div className="message-box">
-                {selectedTicket.originalMessage}
-              </div>
-            </div>
+            <MessageDetails ticket={selectedTicket} formatDate={formatDate} />
 
-            <div className="ai-response">
-              <h4>Проект ответа:</h4>
-
-              {/* Показываем спиннер или textarea */}
-              {generatingId === selectedTicket.id ? (
-                <div className="response-spinner">
-                  <Spinner size="lg" />
-                  {/* <p>Генерация ответа...</p> */}
-                </div>
-              ) : (
-                <textarea
-                  className="response-editor"
-                  placeholder='Ответ...'
-                  value={aiResponses[selectedTicket.id] || ''}
-                  onChange={(e) => {
-                    // Обновляем ответ при ручном редактировании
-                    setAiResponses(prev => ({
-                      ...prev,
-                      [selectedTicket.id]: e.target.value
-                    }));
-                  }}
-                  rows={6}
-                />
-              )}
-
-              {/* Кнопка отправки ответа */}
-              <div className="detail-actions">
-                <Button
-                  colorPalette="blue"
-                  variant="surface"
-                  onClick={() => handleGenerateResponse(selectedTicket.id)}
-                  disabled={generatingId === selectedTicket.id}
-                >
-                  {generatingId === selectedTicket.id ? 'Генерация...' : 'Сгенерировать ответ'}
-                </Button>
-                <Button
-                  onClick={() => handleSendResponse(selectedTicket.id)}
-                  disabled={!aiResponses[selectedTicket.id] || generatingId === selectedTicket.id}
-                >
-                  Отправить
-                </Button>
-              </div>
-            </div>
+            <AiResponse
+              ticketId={selectedTicket.id}
+              aiResponse={aiResponses[selectedTicket.id] || ''}
+              isGenerating={generatingId === selectedTicket.id}
+              onGenerate={handleGenerateResponse}
+              onSend={handleSendResponse}
+              onResponseChange={(id, value) =>
+                setAiResponses(prev => ({ ...prev, [id]: value }))
+              }
+            />
           </div>
         </div>
       )}
