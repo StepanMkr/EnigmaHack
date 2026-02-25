@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, IconButton } from '@chakra-ui/react';
+import { Button, IconButton, Table } from '@chakra-ui/react';
 import * as XLSX from 'xlsx';
 import './test.css';
 import type { Ticket, ToneType } from './test.model';
-import { FaSyncAlt } from 'react-icons/fa';
+import { FaCircle, FaSyncAlt } from 'react-icons/fa';
 import { IoSync } from 'react-icons/io5';
 import { PiFileCsvDuotone } from 'react-icons/pi';
 import { RiFileExcel2Line } from 'react-icons/ri';
@@ -78,13 +78,13 @@ const TicketTable: React.FC = () => {
     }, 1000);
   }, []);
 
-  const getToneIcon = (tone: ToneType): string => {
+  const getToneColor = (tone: ToneType): string => {
     const icons: Record<ToneType, string> = {
-      'Позитивный': '😊',
-      'Нейтральный': '😐',
-      'Негативный': '😠'
+      'Позитивный': 'green',
+      'Нейтральный': 'orange',
+      'Негативный': 'red'
     };
-    return icons[tone] || '😐';
+    return icons[tone] || 'gray';
   };
 
   const handleSync = (): void => {
@@ -200,45 +200,41 @@ const TicketTable: React.FC = () => {
         </Button>
       </div>
 
-      {/* Основная таблица */}
-      <table className="ticket-table">
-        <thead>
-          <tr>
-            <th>Дата</th>
-            <th>ФИО</th>
-            <th>Объект</th>
-            <th>Телефон</th>
-            <th>Email</th>
-            <th>Заводские номера</th>
-            <th>Тип приборов</th>
-            <th>Эмоц. окрас</th>
-            <th>Суть вопроса</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table.Root variant="outline" borderColor="gray.300">
+        <Table.Header bg="gray.200">
+          <Table.Row>
+            <Table.ColumnHeader>Дата</Table.ColumnHeader>
+            <Table.ColumnHeader>ФИО</Table.ColumnHeader>
+            <Table.ColumnHeader>Объект</Table.ColumnHeader>
+            <Table.ColumnHeader>Телефон</Table.ColumnHeader>
+            <Table.ColumnHeader>Email</Table.ColumnHeader>
+            <Table.ColumnHeader>Заводские номера</Table.ColumnHeader>
+            <Table.ColumnHeader>Тип приборов</Table.ColumnHeader>
+            <Table.ColumnHeader>Эмоц. окрас</Table.ColumnHeader>
+            <Table.ColumnHeader textAlign="end">Суть вопроса</Table.ColumnHeader>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
           {tickets.map((ticket: Ticket) => (
-            <tr
+            <Table.Row
               key={ticket.id}
-              className={`ticket-row ${selectedTicket?.id === ticket.id ? 'selected' : ''}`}
               onClick={() => setSelectedTicket(ticket)}
-            >
-              <td>{formatDate(ticket.date)}</td>
-              <td>{ticket.fullName}</td>
-              <td>{ticket.object}</td>
-              <td>{ticket.phone}</td>
-              <td>{ticket.email}</td>
-              <td>{ticket.serialNumbers}</td>
-              <td>{ticket.deviceType}</td>
-              <td>
-                <span title={`Тон: ${ticket.emotionalTone}`}>
-                  {getToneIcon(ticket.emotionalTone)}
-                </span>
-              </td>
-              <td>{ticket.issueSummary}</td>
-            </tr>
+              className={`ticket-row ${selectedTicket?.id === ticket.id ? 'selected' : ''}`}>
+              <Table.Cell>{formatDate(ticket.date)}</Table.Cell>
+              <Table.Cell>{ticket.fullName}</Table.Cell>
+              <Table.Cell>{ticket.object}</Table.Cell>
+              <Table.Cell>{ticket.phone}</Table.Cell>
+              <Table.Cell>{ticket.email}</Table.Cell>
+              <Table.Cell>{ticket.serialNumbers}</Table.Cell>
+              <Table.Cell>{ticket.deviceType}</Table.Cell>
+              <Table.Cell>
+                <FaCircle color={getToneColor(ticket.emotionalTone)} />
+              </Table.Cell>
+              <Table.Cell textAlign="end">{ticket.issueSummary}</Table.Cell>
+            </Table.Row>
           ))}
-        </tbody>
-      </table>
+        </Table.Body>
+      </Table.Root>
 
       {/* Панель детального просмотра */}
       {selectedTicket && (
@@ -278,16 +274,15 @@ const TicketTable: React.FC = () => {
               {/* Кнопка отправки ответа */}
               <div className="detail-actions">
                 <Button
-                  colorScheme="blue"
+                colorPalette="blue" variant="surface">
+                  Сгенерировать ответ
+                </Button>
+                <Button
                   onClick={() => handleSendResponse(selectedTicket.id)}
                   // disabled={selectedTicket.reviewedByHuman}
-                  className="send-button"
                 >
                   {/* {selectedTicket.reviewedByHuman ? '✓ Ответ отправлен' : '✉️ Отправить ответ'} */}
                   Отправить
-                </Button>
-                <Button>
-                  Сгенерировать ИИ ответ
                 </Button>
               </div>
             </div>
