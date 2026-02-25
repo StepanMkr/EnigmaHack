@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, IconButton, Spinner, Table } from '@chakra-ui/react';
+import { Button, IconButton, Spinner, Table, Textarea } from '@chakra-ui/react';
 import * as XLSX from 'xlsx';
 import './test.css';
 import type { Ticket, ToneType } from './test.model';
@@ -13,8 +13,9 @@ const TicketTable: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [syncing, setSyncing] = useState<boolean>(false);
+  const [generatingId, setGeneratingId] = useState<number | null>(null); // для отслеживания генерации
+  const [aiResponses, setAiResponses] = useState<Record<number, string>>({});
 
-  // Моковые данные
   const mockTickets: Ticket[] = [
     {
       id: 1,
@@ -94,6 +95,28 @@ const TicketTable: React.FC = () => {
       console.log('Синхронизация завершена');
       setSyncing(false);
     }, 1500);
+  };
+
+  const handleGenerateResponse = (ticketId: number): void => {
+    setGeneratingId(ticketId);
+
+    setTimeout(() => {
+      const mockResponses: Record<string, string> = {
+        'Негативный': 'Уважаемый клиент! Приносим извинения за доставленные неудобства. Наши специалисты уже работают над решением вашей проблемы. Пожалуйста, ожидайте, мы свяжемся с вами в ближайшее время.',
+        'Нейтральный': 'Здравствуйте! Благодарим за обращение. Для решения вашего вопроса нам нужно уточнить некоторые детали. Напишите, пожалуйста, удобное время для звонка.',
+        'Позитивный': 'Здравствуйте! Рады, что вы обратились к нам. С удовольствием поможем вам с интеграцией. Направляем ссылку на документацию: https://docs.example.com/api'
+      };
+
+      const ticket = tickets.find(t => t.id === ticketId);
+      const tone = ticket?.emotionalTone || 'Нейтральный';
+
+      setAiResponses(prev => ({
+        ...prev,
+        [ticketId]: mockResponses[tone] || 'Спасибо за обращение! Мы обработаем ваш запрос и свяжемся с вами.'
+      }));
+
+      setGeneratingId(null);
+    }, 2000);
   };
 
   const downloadCsv = async (): Promise<void> => {
@@ -266,23 +289,43 @@ const TicketTable: React.FC = () => {
 
             <div className="ai-response">
               <h4>Проект ответа:</h4>
-              <textarea
-                className="response-editor"
-                // defaultValue={selectedTicket.aiResponse}
-                rows={6}
-              />
+
+              {/* Показываем спиннер или textarea */}
+              {generatingId === selectedTicket.id ? (
+                <div className="response-spinner">
+                  <Spinner size="lg" />
+                  {/* <p>Генерация ответа...</p> */}
+                </div>
+              ) : (
+                <textarea
+                  className="response-editor"
+                  placeholder='Ответ...'
+                  value={aiResponses[selectedTicket.id] || ''}
+                  onChange={(e) => {
+                    // Обновляем ответ при ручном редактировании
+                    setAiResponses(prev => ({
+                      ...prev,
+                      [selectedTicket.id]: e.target.value
+                    }));
+                  }}
+                  rows={6}
+                />
+              )}
 
               {/* Кнопка отправки ответа */}
               <div className="detail-actions">
                 <Button
-                  colorPalette="blue" variant="surface">
-                  Сгенерировать ответ
+                  colorPalette="blue"
+                  variant="surface"
+                  onClick={() => handleGenerateResponse(selectedTicket.id)}
+                  disabled={generatingId === selectedTicket.id}
+                >
+                  {generatingId === selectedTicket.id ? 'Генерация...' : 'Сгенерировать ответ'}
                 </Button>
                 <Button
                   onClick={() => handleSendResponse(selectedTicket.id)}
-                // disabled={selectedTicket.reviewedByHuman}
+                  disabled={!aiResponses[selectedTicket.id] || generatingId === selectedTicket.id}
                 >
-                  {/* {selectedTicket.reviewedByHuman ? '✓ Ответ отправлен' : '✉️ Отправить ответ'} */}
                   Отправить
                 </Button>
               </div>
