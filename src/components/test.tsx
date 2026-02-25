@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@chakra-ui/react';
+import { Button, IconButton } from '@chakra-ui/react';
 import * as XLSX from 'xlsx';
 import './test.css';
 import type { Ticket, ToneType } from './test.model';
+import { FaSyncAlt } from 'react-icons/fa';
+import { IoSync } from 'react-icons/io5';
+import { PiFileCsvDuotone } from 'react-icons/pi';
+import { RiFileExcel2Line } from 'react-icons/ri';
 
 const TicketTable: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -177,28 +181,22 @@ const TicketTable: React.FC = () => {
     <div className="ticket-system">
       {/* Кнопки управления */}
       <div className="action-buttons">
-        <Button
-          className="action-btn sync-btn"
+        <IconButton
+          aria-label="Search database"
           onClick={handleSync}
           loading={syncing}
-          loadingText="Синхронизация..."
-          colorScheme="blue"
         >
-          🔄 Синхронизировать
-        </Button>
+          <IoSync />
+        </IconButton>
         <Button
-          className="action-btn csv-btn"
           onClick={downloadCsv}
-          colorScheme="green"
         >
-          📥 Скачать CSV
+          <PiFileCsvDuotone /> Скачать CSV
         </Button>
         <Button
-          className="action-btn xlsx-btn"
           onClick={downloadXlsx}
-          colorScheme="teal"
         >
-          📥 Скачать Excel (.xlsx)
+          <RiFileExcel2Line /> Скачать Excel (.xlsx)
         </Button>
       </div>
 

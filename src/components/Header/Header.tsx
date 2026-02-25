@@ -1,5 +1,7 @@
 import type { Page } from "../../model/page";
 import "./Header.css";
+import { Image } from "@chakra-ui/react"
+import logo from "../../assets/logo2.png";
 
 type Props = {
   setPage: (page: Page) => void;
@@ -8,7 +10,12 @@ type Props = {
 export default function Header({ setPage }: Props) {
   return (
     <header>
-      <h1 style={{ margin: 0, paddingLeft: "16px" }}>ЭРИС</h1>
+      {/* <h1 className="title">ЭРИС</h1> */}
+      <Image
+        src={logo}
+        width="205px"
+        height="auto"
+        objectFit="contain" />
       <nav style={{ marginTop: "10px" }}>
         <button onClick={() => setPage("home")} className="nav-button">Главная</button>
         <button onClick={() => setPage("export")} className="nav-button">Выгрузка</button>
