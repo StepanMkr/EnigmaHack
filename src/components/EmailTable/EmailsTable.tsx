@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, IconButton, Spinner, Table } from '@chakra-ui/react';
+import { Spinner } from '@chakra-ui/react';
 import * as XLSX from 'xlsx';
 import './EmailsTable.css';
 import type { Ticket, ToneType } from './emails-table.model';
@@ -8,6 +8,7 @@ import MessageDetails from '../../features/MessageDetails/MessageDetails';
 import AiResponse from '../../features/AiResponse/AiResponse';
 import DetailsHeader from '../../features/MessageDetailsHeader/MessageDetailsHeader';
 import TicketsTable from '../../features/TicketsTable/TickectsTable';
+import { mockTickets } from './tickets.mock';
 
 const EmailsTable: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -17,63 +18,7 @@ const EmailsTable: React.FC = () => {
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [aiResponses, setAiResponses] = useState<Record<number, string>>({});
 
-  const mockTickets: Ticket[] = [
-    {
-      id: 1,
-      date: '2024-02-24T10:30:00',
-      fullName: 'Иван Петров',
-      object: 'Котельная №3',
-      phone: '+7 (999) 123-45-67',
-      email: 'ivan.petrov@email.com',
-      serialNumbers: ['SN-2024-001', 'SN-2024-002'],
-      deviceType: 'Котел отопительный Protherm',
-      emotionalTone: 'Негативный',
-      issueSummary: 'Клиент не может провести оплату картой, получает ошибку',
-      originalMessage: 'Добрый день! Уже третий раз пытаюсь оплатить заказ, но сайт выдает ошибку "Транзакция отклонена". Карта рабочая, деньги на счету есть. Помогите срочно!',
-    },
-    {
-      id: 2,
-      date: '2024-02-24T09:15:00',
-      fullName: 'Елена Смирнова',
-      object: 'ТЦ "Меркурий"',
-      phone: '+7 (495) 234-56-78',
-      email: 'elena.smirnova@company.ru',
-      serialNumbers: ['AC-2023-789'],
-      deviceType: 'Кондиционер Mitsubishi',
-      emotionalTone: 'Нейтральный',
-      issueSummary: 'Клиент хочет сменить тариф, но не уверен в выборе',
-      originalMessage: 'Здравствуйте! Думаю перейти на другой тариф. Сейчас у меня базовый, но нужно больше функций. Не могу определиться между Про и Бизнес. Что посоветуете?',
-    },
-    {
-      id: 3,
-      date: '2024-02-24T08:45:00',
-      fullName: 'Алексей Иванов',
-      object: 'Завод "Металлист"',
-      phone: '+7 (343) 345-67-89',
-      email: 'alex.ivanov@metal.ru',
-      serialNumbers: ['PUMP-456', 'PUMP-457', 'PUMP-458'],
-      deviceType: 'Насосное оборудование Grundfos',
-      emotionalTone: 'Позитивный',
-      issueSummary: 'Вопрос по документации API и лимитам интеграции',
-      originalMessage: 'Добрый день! Планируем интеграцию вашего оборудования в нашу систему мониторинга. Нужна документация по API и информация по лимитам запросов. Спасибо!',
-    },
-    {
-      id: 4,
-      date: '2024-02-24T07:20:00',
-      fullName: 'Михаил Соколов',
-      object: 'Офис "Плаза"',
-      phone: '+7 (911) 456-78-90',
-      email: 'urgent.client@mail.com',
-      serialNumbers: ['BOILER-001'],
-      deviceType: 'Котел электрический Vaillant',
-      emotionalTone: 'Негативный',
-      issueSummary: 'Полная неработоспособность оборудования, система не запускается',
-      originalMessage: 'Срочно! Котел перестал работать, выдает ошибку E04. В офисе холодно, сотрудники мерзнут! Нужно срочно решить проблему!',
-    }
-  ];
-
   useEffect(() => {
-    // Имитация загрузки данных с сервера
     setTimeout(() => {
       setTickets(mockTickets);
       setLoading(false);
@@ -91,7 +36,6 @@ const EmailsTable: React.FC = () => {
 
   const handleSync = (): void => {
     setSyncing(true);
-    // Имитация запроса за новыми сообщениями
     setTimeout(() => {
       console.log('Синхронизация завершена');
       setSyncing(false);
